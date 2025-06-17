@@ -19,20 +19,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- CUSTOM DARK THEME WITH WHITE TEXT ---
+# --- CUSTOM DARK THEME WITH WHITE TEXT AND STYLED BUTTONS ---
 st.markdown("""
     <style>
         body, .stApp {
             background-color: #000000;
             color: white;
         }
-        h1, h2, h3, h4, h5, h6, label, p {
-            color: white !important;
-        }
-        .st-cw, .st-bb, .st-eb, .st-dc {
-            color: white !important;
-        }
-        .input-box label {
+        h1, h2, h3, h4, h5, h6, label, p, .st-cw, .st-bb, .st-eb, .st-dc {
             color: white !important;
         }
         input, textarea, .stNumberInput input {
@@ -41,6 +35,29 @@ st.markdown("""
         }
         .stSelectbox, .stRadio, .stFileUploader {
             color: black !important;
+        }
+        /* Styled buttons */
+        .stButton > button {
+            background-color: #1E90FF;
+            color: white;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-weight: bold;
+        }
+        .stButton > button:hover {
+            background-color: #1565C0;
+            color: white;
+        }
+        .stDownloadButton > button {
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-weight: bold;
+        }
+        .stDownloadButton > button:hover {
+            background-color: #388E3C;
+            color: white;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -137,7 +154,7 @@ if df is not None:
 
     st.pyplot(fig)
 
-    # --- DOWNLOAD ---
+    # --- DOWNLOAD BUTTON ---
     csv = display_df.to_csv(index=False).encode("utf-8")
     st.download_button(
         label="📥 Download Comparison as CSV",
