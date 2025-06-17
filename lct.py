@@ -19,22 +19,28 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- CUSTOM CSS FOR DARK THEME ---
+# --- CUSTOM DARK THEME WITH WHITE TEXT ---
 st.markdown("""
     <style>
-        body {
-            background-color: #000000;
-            color: white;
-        }
-        .stApp {
+        body, .stApp {
             background-color: #000000;
             color: white;
         }
         h1, h2, h3, h4, h5, h6, label, p {
             color: white !important;
         }
-        .st-cw {
+        .st-cw, .st-bb, .st-eb, .st-dc {
             color: white !important;
+        }
+        .input-box label {
+            color: white !important;
+        }
+        input, textarea, .stNumberInput input {
+            background-color: white !important;
+            color: black !important;
+        }
+        .stSelectbox, .stRadio, .stFileUploader {
+            color: black !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -74,14 +80,9 @@ if df is None:
             with col:
                 st.markdown(f"<h4 style='color:white;'>📝 Option {i}</h4>", unsafe_allow_html=True)
 
-                st.markdown(f"<span style='color:white;'>Loan Amount (₹)</span>", unsafe_allow_html=True)
-                amt = st.number_input("", min_value=1000, step=1000, key=f"amt{i}")
-
-                st.markdown(f"<span style='color:white;'>Annual Interest Rate (%)</span>", unsafe_allow_html=True)
-                rate = st.number_input("", min_value=0.1, max_value=30.0, step=0.1, key=f"rate{i}")
-
-                st.markdown(f"<span style='color:white;'>Tenure (Years)</span>", unsafe_allow_html=True)
-                tenure = st.number_input("", min_value=1, max_value=30, step=1, key=f"tenure{i}")
+                amt = st.number_input("Loan Amount (₹)", min_value=1000, step=1000, key=f"amt{i}")
+                rate = st.number_input("Annual Interest Rate (%)", min_value=0.1, max_value=30.0, step=0.1, key=f"rate{i}")
+                tenure = st.number_input("Tenure (Years)", min_value=1, max_value=30, step=1, key=f"tenure{i}")
 
                 data.append({"amount": amt, "rate": rate, "tenure_years": tenure})
 
