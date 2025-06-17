@@ -20,55 +20,90 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.title("🏦 Loan Comparison Tool")
+# ——— Custom Dark Theme Styling —————————————————————————————————
 st.markdown("""
-Compare multiple loan offers side by side to find the most cost‑effective option.
-You can either **manually enter** loan details or **upload** a CSV with your offers.
-""")
+    <style>
+    body {
+        background-color: #1e1e1e;
+        color: #f5f5f5;
+    }
+    .stApp {
+        background-color: #1e1e1e;
+    }
+    .css-1d391kg {
+        background-color: #2c2c2c;
+        color: #ffffff;
+    }
+    .stButton>button {
+        color: white;
+        background-color: #4CAF50;
+        border-radius: 8px;
+    }
+    .stDownloadButton>button {
+        color: white;
+        background-color: #2196F3;
+        border-radius: 8px;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# ——— Sidebar: CSV Upload ———————————————————————————————————————
-st.sidebar.header("Upload Loan Offers CSV")
+# ——— Title and Description ———————————————————————————————
+st.title("🏦 Loan Comparison Tool")
+st.markdown("Compare multiple loan offers side by side to find the most cost‑effective option.")
+
+with st.expander("ℹ️ How to use this tool"):
+    st.markdown("""
+    - 📁 **Upload CSV** with columns: `amount`, `rate`, `tenure_years`
+    - 🔢 Or **manually input** loan details below
+    - 📉 View **EMI and Interest Comparison**
+    - 📥 Download results as CSV
+    """)
+
+# ——— Sidebar: Upload CSV —————————————————————————————————————
+st.sidebar.header("📁 Upload Loan Offers CSV")
 uploaded_file = st.sidebar.file_uploader(
-    "Upload a CSV file with columns: amount, rate, tenure_years",
+    "CSV must have columns: amount, rate, tenure_years",
     type=["csv"]
 )
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
     required_cols = {"amount", "rate", "tenure_years"}
     if not required_cols.issubset(df.columns):
-        st.sidebar.error(f"CSV must contain columns: {required_cols}")
+        st.sidebar.error(f"Missing columns. Required: {required_cols}")
         st.stop()
-    st.sidebar.success("CSV loaded! Scroll down to see comparison.")
+    st.sidebar.success("✅ CSV Loaded Successfully")
 else:
     df = None
 
-# ——— Main: Manual Entry Form ———————————————————————————————————
+# ——— Manual Loan Entry Form ————————————————————————————————
 if df is None:
-    st.header("🔢 Manual Loan Entry")
-    num = st.selectbox("How many loan options to compare?", [2, 3], index=0)
+    st.header("🔢 Manually Enter Loan Options")
+    num = st.radio("Select number of options to compare:", [2, 3], horizontal=True)
 
     data = []
     with st.form("loan_form", clear_on_submit=False):
         cols = st.columns(num)
         for i, col in enumerate(cols, start=1):
             with col:
-                st.subheader(f"Option {i}")
-                amt = st.number_input(f"Amount (₹) — Option {i}", min_value=1000, step=1000, key=f"amt{i}")
-                rate = st.number_input(f"Annual Rate (%) — Option {i}", min_value=0.1, max_value=30.0, step=0.1, key=f"rate{i}")
-                tenure = st.number_input(f"Tenure (Years) — Option {i}", min_value=1, max_value=30, step=1, key=f"tenure{i}")
+                st.markdown(f"#### 📝 Option {i}")
+                amt = st.number_input("Loan Amount (₹)", min_value=1000, step=1000, key=f"amt{i}", help="Principal loan amount")
+                rate = st.number_input("Annual Interest Rate (%)", min_value=0.1, max_value=30.0, step=0.1, key=f"rate{i}", help="Annual interest rate in %")
+                tenure = st.number_input("Tenure (Years)", min_value=1, max_value=30, step=1, key=f"tenure{i}", help="Loan duration in years")
                 data.append({"amount": amt, "rate": rate, "tenure_years": tenure})
         submitted = st.form_submit_button("▶ Compare Loans")
 
     if submitted:
         df = pd.DataFrame(data)
 
-# ——— Compute EMI & Totals —————————————————————————————————————
+# ——— EMI Calculations ——————————————————————————————————————
 if df is not None:
     df = df.copy()
     df["monthly_rate"] = df["rate"] / (12 * 100)
     df["months"] = df["tenure_years"] * 12
 
     def calc_emi(P, r, n):
+        if r == 0:
+            return P / n
         return (P * r * (1 + r) ** n) / ((1 + r) ** n - 1)
 
     df["EMI"] = df.apply(lambda row: calc_emi(row["amount"], row["monthly_rate"], row["months"]), axis=1)
@@ -76,7 +111,7 @@ if df is not None:
     df["Total Interest"] = df["Total Payment"] - df["amount"]
     df["Option"] = [f"Loan {i}" for i in range(1, len(df) + 1)]
 
-    # ——— Display Table —————————————————————————————————————
+    # ——— Summary Table ————————————————————————————————————
     st.markdown("## 📊 Comparison Summary")
     display_df = df[["Option", "amount", "rate", "tenure_years", "EMI", "Total Interest", "Total Payment"]]
     display_df.columns = [
@@ -88,19 +123,27 @@ if df is not None:
     # ——— Plots —————————————————————————————————————————————
     st.markdown("## 📈 Visual Comparison")
     fig, axes = plt.subplots(1, 2, figsize=(12, 4), tight_layout=True)
+    fig.patch.set_facecolor('#1e1e1e')
 
-    axes[0].bar(display_df["Option"], display_df["Monthly EMI (₹)"])
-    axes[0].set_title("Monthly EMI")
-    axes[0].set_ylabel("₹")
+    axes[0].bar(display_df["Option"], display_df["Monthly EMI (₹)"], color='#03a9f4')
+    axes[0].set_title("Monthly EMI", color='white')
+    axes[0].set_ylabel("₹", color='white')
+    axes[0].tick_params(colors='white')
 
-    axes[1].bar(display_df["Option"], display_df["Total Interest (₹)"])
-    axes[1].set_title("Total Interest Paid")
-    axes[1].set_ylabel("₹")
+    axes[1].bar(display_df["Option"], display_df["Total Interest (₹)"], color='#e91e63')
+    axes[1].set_title("Total Interest Paid", color='white')
+    axes[1].set_ylabel("₹", color='white')
+    axes[1].tick_params(colors='white')
+
+    for spine in axes[0].spines.values():
+        spine.set_edgecolor('white')
+    for spine in axes[1].spines.values():
+        spine.set_edgecolor('white')
 
     st.pyplot(fig)
 
-    # ——— Download Results ————————————————————————————————————
-    csv = display_df.to_csv().encode("utf-8")
+    # ——— Download Button ————————————————————————————————
+    csv = display_df.to_csv(index=False).encode("utf-8")
     st.download_button(
         label="📥 Download Comparison as CSV",
         data=csv,
@@ -109,4 +152,4 @@ if df is not None:
     )
 
 st.markdown("---")
-st.markdown("Built with ❤️ using Streamlit • 2025")
+st.markdown("<p style='text-align:center; color:gray;'>Made with ❤️ by Chirag • Powered by Streamlit</p>", unsafe_allow_html=True)
